@@ -1,5 +1,6 @@
 package cl.dev.mmatush.poc.config;
 
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -9,19 +10,24 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
 
 @Configuration
+@EnableConfigurationProperties(UploadExecutorProperties.class)
 public class ExecutorConfiguration {
 
     public static final String UPLOAD_EXECUTOR = "uploadExecutor";
 
-    private static final int AWAIT_TERMINATION_SECONDS = 60;
+    private final UploadExecutorProperties props;
+
+    public ExecutorConfiguration(UploadExecutorProperties props) {
+        this.props = props;
+    }
 
     @Bean(UPLOAD_EXECUTOR)
     @Profile("custom")
     public ThreadPoolTaskExecutor customExecutor() {
         ThreadPoolTaskExecutor e = baseExecutor();
-        e.setCorePoolSize(5);
-        e.setMaxPoolSize(5);
-        e.setQueueCapacity(10);
+        e.setCorePoolSize(props.custom().corePoolSize());
+        e.setMaxPoolSize(props.custom().maxPoolSize());
+        e.setQueueCapacity(props.custom().queueCapacity());
         e.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         return e;
     }
@@ -31,8 +37,8 @@ public class ExecutorConfiguration {
     @Profile("fixed")
     public ThreadPoolTaskExecutor fixedExecutor() {
         ThreadPoolTaskExecutor e = baseExecutor();
-        e.setCorePoolSize(5);
-        e.setMaxPoolSize(5);
+        e.setCorePoolSize(props.fixed().poolSize());
+        e.setMaxPoolSize(props.fixed().poolSize());
         return e;
     }
 
@@ -44,7 +50,7 @@ public class ExecutorConfiguration {
         e.setCorePoolSize(0);
         e.setMaxPoolSize(Integer.MAX_VALUE);
         e.setQueueCapacity(0);
-        e.setKeepAliveSeconds(60);
+        e.setKeepAliveSeconds((int) props.cached().keepAlive().toSeconds());
         return e;
     }
 
@@ -62,18 +68,19 @@ public class ExecutorConfiguration {
     @Bean(UPLOAD_EXECUTOR)
     @Profile("virtual")
     public SimpleAsyncTaskExecutor virtualExecutor() {
-        SimpleAsyncTaskExecutor e = new SimpleAsyncTaskExecutor("upload-vt-");
+        SimpleAsyncTaskExecutor e = new SimpleAsyncTaskExecutor(props.threadNamePrefix() + "vt-");
         e.setVirtualThreads(true);
-        e.setConcurrencyLimit(5);
-        e.setTaskTerminationTimeout(AWAIT_TERMINATION_SECONDS * 1000L);
+        e.setConcurrencyLimit(props.virtual().concurrencyLimit());
+        e.setTaskTerminationTimeout(props.awaitTermination().toMillis());
         return e;
     }
 
-    private static ThreadPoolTaskExecutor baseExecutor() {
+    private ThreadPoolTaskExecutor baseExecutor() {
         ThreadPoolTaskExecutor e = new ThreadPoolTaskExecutor();
-        e.setThreadNamePrefix("upload-");
+        e.setThreadNamePrefix(props.threadNamePrefix());
         e.setWaitForTasksToCompleteOnShutdown(true);
-        e.setAwaitTerminationSeconds(AWAIT_TERMINATION_SECONDS);
+        e.setAwaitTerminationSeconds((int) props.awaitTermination().toSeconds());
         return e;
     }
+
 }

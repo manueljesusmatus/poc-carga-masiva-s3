@@ -1,6 +1,7 @@
 package cl.dev.mmatush.poc.cron;
 
 import cl.dev.mmatush.poc.concurrent.ThreadPoolUpload;
+import cl.dev.mmatush.poc.config.UploadSchedulerProperties;
 import cl.dev.mmatush.poc.service.UploadService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,16 +20,17 @@ public class TaskScheduler {
 
     private final ThreadPoolUpload threadPoolUpload;
     private final UploadService uploadService;
+    private final UploadSchedulerProperties props;
 
-    @Scheduled(cron = "0/20 * * * * ?")
+    @Scheduled(cron = "${upload.scheduler.cron}")
     @SchedulerLock(
             name = "TaskScheduler_scheduledTask",
-            lockAtLeastFor = "PT30s",
-            lockAtMostFor = "PT30s")
+            lockAtLeastFor = "${upload.scheduler.lock-at-least-for}",
+            lockAtMostFor = "${upload.scheduler.lock-at-most-for}")
     public void scheduledTask() {
         log.info("Initializing TaskScheduler scheduledTask");
         var lista = new ArrayList<BooleanSupplier>();
-        for(int i = 0; i < 25; i++) {
+        for(int i = 0; i < props.taskCount(); i++) {
             lista.add(uploadService::upload);
         }
         doTask(lista);

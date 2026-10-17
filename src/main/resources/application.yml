@@ -16,6 +16,26 @@ spring:
       settings.trace: false
       settings.web-allow-others: false
 
+upload:
+  scheduler:
+    cron: "0/15 * * * * ?"
+    lock-at-least-for: PT20S
+    lock-at-most-for: PT20S
+    task-count: 25
+  executor:
+    thread-name-prefix: upload-
+    await-termination: 60s
+    custom:
+      core-pool-size: 5
+      max-pool-size: 5
+      queue-capacity: 10
+    fixed:
+      pool-size: 5
+    cached:
+      keep-alive: 60s
+    virtual:
+      concurrency-limit: 5
+
 logging:
   level:
     root: INFO
