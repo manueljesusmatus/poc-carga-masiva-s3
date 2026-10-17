@@ -3,6 +3,7 @@ package cl.dev.mmatush.poc.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.concurrent.ThreadPoolExecutor;
@@ -54,6 +55,17 @@ public class ExecutorConfiguration {
         ThreadPoolTaskExecutor e = baseExecutor();
         e.setCorePoolSize(1);
         e.setMaxPoolSize(1);
+        return e;
+    }
+
+    // Executors.newVirtualThreadPerTaskExecutor() + limite de concurrencia
+    @Bean(UPLOAD_EXECUTOR)
+    @Profile("virtual")
+    public SimpleAsyncTaskExecutor virtualExecutor() {
+        SimpleAsyncTaskExecutor e = new SimpleAsyncTaskExecutor("upload-vt-");
+        e.setVirtualThreads(true);
+        e.setConcurrencyLimit(5);
+        e.setTaskTerminationTimeout(AWAIT_TERMINATION_SECONDS * 1000L);
         return e;
     }
 

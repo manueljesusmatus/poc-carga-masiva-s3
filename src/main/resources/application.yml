@@ -1,6 +1,6 @@
 spring:
   profiles:
-    active: custom
+    active: virtual
   application:
     name: poc-carga-masiva-s3
   datasource:
