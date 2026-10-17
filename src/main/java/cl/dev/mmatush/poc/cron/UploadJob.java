@@ -16,7 +16,7 @@ import java.util.function.BooleanSupplier;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class TaskScheduler {
+public class UploadJob {
 
     private final ThreadPoolUpload threadPoolUpload;
     private final UploadService uploadService;
@@ -24,28 +24,24 @@ public class TaskScheduler {
 
     @Scheduled(cron = "${upload.scheduler.cron}")
     @SchedulerLock(
-            name = "TaskScheduler_scheduledTask",
+            name = "UploadJob_scheduledTask",
             lockAtLeastFor = "${upload.scheduler.lock-at-least-for}",
             lockAtMostFor = "${upload.scheduler.lock-at-most-for}")
     public void scheduledTask() {
-        log.info("Initializing TaskScheduler scheduledTask");
+        log.info("Initializing UploadJob scheduledTask");
         var lista = new ArrayList<BooleanSupplier>();
         for(int i = 0; i < props.taskCount(); i++) {
             lista.add(uploadService::upload);
         }
         doTask(lista);
-        log.info("Finishing TaskScheduler scheduledTask");
+        log.info("Finishing UploadJob scheduledTask");
     }
 
     private void doTask(List<BooleanSupplier> tasks) {
         threadPoolUpload.execute(tasks)
-                .thenAccept(result -> {
-                    if (Boolean.TRUE.equals(result)) {
-                        log.info("Upload completed successfully");
-                    } else {
-                        log.error("Upload failed");
-                    }
-                }).exceptionally(ex -> {
+                .thenAccept(result ->
+                    log.info("Upload results: {}", result))
+                .exceptionally(ex -> {
                     log.error("Error during upload", ex);
                     return null;
                 }).join();

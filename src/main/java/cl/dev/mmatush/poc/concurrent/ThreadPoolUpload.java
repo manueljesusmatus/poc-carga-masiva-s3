@@ -7,6 +7,6 @@ import java.util.function.BooleanSupplier;
 @FunctionalInterface
 public interface ThreadPoolUpload {
 
-    CompletableFuture<Boolean> execute(List<BooleanSupplier> tasks);
+    CompletableFuture<List<Boolean>> execute(List<BooleanSupplier> tasks);
 
 }
