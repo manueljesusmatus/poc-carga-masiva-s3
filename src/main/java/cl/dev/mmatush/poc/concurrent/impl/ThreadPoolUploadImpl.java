@@ -1,23 +1,26 @@
 package cl.dev.mmatush.poc.concurrent.impl;
 
 import cl.dev.mmatush.poc.concurrent.ThreadPoolUpload;
-import org.springframework.context.annotation.Profile;
+import cl.dev.mmatush.poc.config.ExecutorConfiguration;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.Executor;
 import java.util.function.BooleanSupplier;
 
+/**
+ * El tipo de pool (custom, fixed, cached, single) lo define el profile activo
+ * a traves del bean {@link ExecutorConfiguration#UPLOAD_EXECUTOR}.
+ */
 @Component
-@Profile("single")
-public class ThreadPoolSingle implements ThreadPoolUpload {
+public class ThreadPoolUploadImpl implements ThreadPoolUpload {
 
-    public final ExecutorService executor;
+    private final Executor executor;
 
-    public ThreadPoolSingle() {
-        this.executor = Executors.newSingleThreadExecutor();
+    public ThreadPoolUploadImpl(@Qualifier(ExecutorConfiguration.UPLOAD_EXECUTOR) Executor executor) {
+        this.executor = executor;
     }
 
     @Override
@@ -31,4 +34,5 @@ public class ThreadPoolSingle implements ThreadPoolUpload {
                 .thenApply(v -> futures.stream()
                         .allMatch(CompletableFuture::join));
     }
+
 }
