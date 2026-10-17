@@ -1,4 +1,6 @@
 spring:
+  profiles:
+    active: custom
   application:
     name: poc-carga-masiva-s3
   datasource:
